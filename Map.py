@@ -138,6 +138,9 @@ class Map:
     def getTargetsArray(self):
         return self.targetArray
 
+    def getGameMap(self):
+        return self.map
+
 
 
 #   Helpers

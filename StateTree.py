@@ -1,11 +1,22 @@
 class StateTree:
 
-    def __init__(self, box_array, player_pos):
-        self.current_node = Node(box_array, player_pos, None, None)
+    def __init__(self, box_array, player_pos, assignment):
+        self.current_node = Node(box_array, player_pos, None, None, assignment.greedyAssignment(box_array))
         self.root_node = self.current_node
 
-    def add_node(self, box_array, player_pos, move):
-        self.current_node.add_node(box_array, player_pos, move)
+    def add_node(self, box_array, player_pos, move, assignment):
+        lower_bound = assignment.greedyAssignment(box_array)
+        if lower_bound < self.current_node.lower_bound:
+            self.current_node.add_node(box_array, player_pos, move, lower_bound)
+            self.current_node = self.current_node.sons[-1]
+            return 1
+        else:
+            self.current_node.add_node(box_array, player_pos, move, lower_bound)
+            return 0
+
+
+    def get_current_node(self):
+        return self.current_node
 
     def refuse_node(self):
         if self.current_node == self.root_node:
@@ -16,15 +27,16 @@ class StateTree:
 
 class Node:
 
-    def __init__(self, box_array, player_pos, farther, move):
+    def __init__(self, box_array, player_pos, farther, move, lower_bound):
         self.box_array = box_array
         self.player_pos = player_pos
         self.farther = farther
         self.move = move
+        self.lower_bound = lower_bound
         self.sons = []
 
-    def add_node(self, box_array, player_pos, move):
-        self.sons.append(Node(box_array, player_pos, self, move))
+    def add_node(self, box_array, player_pos, move, lower_bound):
+        self.sons.append(Node(box_array, player_pos, self, move, lower_bound))
 
 
 class Move:
