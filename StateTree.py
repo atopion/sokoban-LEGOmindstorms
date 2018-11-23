@@ -4,15 +4,21 @@ class StateTree:
         self.current_node = Node(box_array, player_pos, None, None, assignment.greedyAssignment(box_array))
         self.root_node = self.current_node
 
-    def add_node(self, box_array, player_pos, move, assignment):
-        lower_bound = assignment.greedyAssignment(box_array)
-        if lower_bound < self.current_node.lower_bound:
-            self.current_node.add_node(box_array, player_pos, move, lower_bound)
-            self.current_node = self.current_node.sons[-1]
-            return 1
-        else:
-            self.current_node.add_node(box_array, player_pos, move, lower_bound)
-            return 0
+    def add_new_node(self, box_array, player_pos, move, lower_bound):
+        self.current_node.add_new_node(box_array, player_pos, move, lower_bound)
+
+    def add_node(self, node):
+        self.current_node.add_node(node)
+
+        # Handled inside the execute function..
+        # lower_bound = assignment.greedyAssignment(box_array)
+        # if lower_bound < self.current_node.lower_bound:
+        #     self.current_node.add_node(box_array, player_pos, move, lower_bound)
+        #     self.current_node = self.current_node.sons[-1]
+        #     return 1
+        # else:
+        #     self.current_node.add_node(box_array, player_pos, move, lower_bound)
+        #     return 0
 
 
     def get_current_node(self):
@@ -35,8 +41,11 @@ class Node:
         self.lower_bound = lower_bound
         self.sons = []
 
-    def add_node(self, box_array, player_pos, move, lower_bound):
+    def add_new_node(self, box_array, player_pos, move, lower_bound):
         self.sons.append(Node(box_array, player_pos, self, move, lower_bound))
+
+    def add_node(self, node):
+        self.sons.append(node)
 
 
 class Move:

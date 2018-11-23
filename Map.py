@@ -4,9 +4,10 @@ import numpy as np
 class Map:
 
     clear     = lambda self, x : x if x != 1 or x != 2 else 5
-    box       = lambda self, x : x == 2
+    #box       = lambda self, x : x == 2
     targets   = lambda self, x : x == 3
     playerpos = lambda self, x : x == 1
+
 
     def __init__(self, mapString):
         self.mapString = mapString
@@ -14,10 +15,12 @@ class Map:
         self.width = 0
         self.height = 0
         self.mapProduction()
-        self.clearedMap = map(self.clear, self.map)
-        self.boxArray = list(filter(self.box, self.map))
+        self.clearedMap = list(filter(self.clear, self.map))
         self.targetArray = list(filter(self.targets, self.map))
         self.player = list(filter(self.playerpos, self.map))[0]
+        self.boxArray = [i for i, x in enumerate(self.map) if x == 2]
+
+        self.reachableArray = np.zeros(self.width * self.height, dtype=int)
 
     def mapProduction(self):
         self.map = []
@@ -25,9 +28,9 @@ class Map:
         width = 0
         for c in self.mapString:
             tmp += 1
-            if c == "$":  # Player
+            if c == "@":  # Player
                 self.map.append(1)
-            if c == "@":  # Box
+            if c == "$":  # Box
                 self.map.append(2)
             if c == ".":  # Target
                 self.map.append(3)
@@ -42,16 +45,17 @@ class Map:
                 tmp = 0
 
         self.width  = width
-        self.height = len(self.map) / width
+        self.height = int(len(self.map) / width)
 
     def mapPrinting(self):
         tmp = ""
         count = 0
+        pre = 0
         for c in self.map:
             if c == 1:
-                tmp += "$"
-            elif c == 2:
                 tmp += "@"
+            elif c == 2:
+                tmp += "$"
             elif c == 3:
                 tmp += "."
             elif c == 4:
@@ -60,9 +64,13 @@ class Map:
                 tmp += " "
             count += 1
             if count == self.width:
+                tmp += "   "
+                for i in range(0, self.width, 1):
+                    tmp += str(pre + i).zfill(2) + " "
                 print(tmp)
                 tmp = ""
                 count = 0
+                pre += self.width
 
 #   Normalize the players position by finding the top left cell the player can reach without moving a box.
 #   This decreases the memory usage of the solution tree a lot, but makes a new algorithm necessary to connect
@@ -111,7 +119,16 @@ class Map:
                 if(tmp_map[i] == c[1]):
                     tmp_map[i] = c[0]
 
+        print("TMP MAP: ")
+        self.print_array(tmp_map)
+        print("")
         playerLabel = tmp_map[y * self.width + x]
+        print("PlayerLabel: ", playerLabel)
+
+        self.reachableArray = np.zeros(self.width * self.height, dtype=int)
+        for i in range(0, len(tmp_map), 1):
+            if tmp_map[int((i % self.height) * self.width + i // self.height)] == playerLabel:
+                self.reachableArray[i] = 1
 
         # Calculate left-top corner with label: playerLabel
         # IMPORTANT: left goes before top
@@ -122,6 +139,68 @@ class Map:
                 else:
                     return [int((i % self.height) * self.width + i // self.height) % self.width,
                             int((i % self.height) * self.width + i // self.height) // self.width]
+
+    def normalizedPlayerPositionMove(self, move):
+        x = move[0]
+        t = self.map[move[0]]
+        self.map[move[0]] = self.map[move[1]]
+        self.map[move[1]] = t
+
+        y = x // self.width
+        x = x % self.width
+        if x > self.width or y > self.height:
+            return None
+
+        tmp_map = np.empty(len(self.map), dtype=int)
+        changes = []
+        label = 1
+        for i in range(0, len(self.map), 1):
+            if self.isUnpassableMap(i, self.map):
+                tmp_map[i] = 0
+            elif (i-1 < 0 or self.isUnpassable(i-1)) and (i-self.width < 0 or self.isUnpassable(i-self.width)):
+                tmp_map[i] = label
+                label += 1
+            elif i-self.width < 0 or self.isUnpassable(i-self.width):
+                tmp_map[i] = tmp_map[i-1]
+            elif i-1 < 0 or self.isUnpassable(i-1):
+                tmp_map[i] = tmp_map[i-self.width]
+            else:
+                if tmp_map[i-1] < tmp_map[i-self.width]:
+                    tmp_map[i] = tmp_map[i-1]
+                    changes.append([tmp_map[i-1], tmp_map[i-self.width]])
+                else:
+                    tmp_map[i] = tmp_map[i-self.width]
+                    changes.append([tmp_map[i-self.width], tmp_map[i-1]])
+
+        self.map[move[1]] = self.map[move[0]]
+        self.map[move[0]] = t
+
+        # Normalize Changes
+        for i in range(0, len(changes), 1):
+            for j in range(0, len(changes), 1):
+                if changes[i][1] == changes[j][0]:
+                    changes[j][0] = changes[i][0]
+
+        for i in range(0, len(tmp_map), 1):
+            for c in changes:
+                if(tmp_map[i] == c[1]):
+                    tmp_map[i] = c[0]
+
+        print("TMP MAP: ")
+        self.print_array(tmp_map)
+        playerLabel = tmp_map[y * self.width + x]
+        print("PlayerLabel: ", playerLabel)
+
+        self.reachableArray = np.zeros(self.width * self.height, dtype=int)
+        for i in range(0, len(tmp_map), 1):
+            if tmp_map[i] == playerLabel:
+                self.reachableArray[i] = 1
+
+        # Calculate left-top corner with label: playerLabel
+        # IMPORTANT: left goes before top
+        for i in range(0, len(tmp_map), 1):
+            if tmp_map[int((i % self.height) * self.width + i // self.height)] == playerLabel:
+                return int((i % self.height) * self.width + i // self.height)
 
     def getBoxArray(self):
         return np.array(self.boxArray, dtype=int)
@@ -141,12 +220,39 @@ class Map:
     def getGameMap(self):
         return self.map
 
+    def is_reachable(self, index):
+        return self.reachableArray[index] == 1
 
+    def print_reachableArray(self):
+        tmp = ""
+        count = 0
+        for c in self.reachableArray:
+            if c == 1: tmp += "1"
+            else: tmp += "0"
+
+            count += 1
+            if count == self.width:
+                print(tmp)
+                tmp = ""
+                count = 0
+
+    def print_array(self, map):
+        tmp = ""
+        count = 0
+        for c in map:
+            tmp += str(c)
+            count += 1
+            if count == self.width:
+                print(tmp)
+                tmp = ""
+                count = 0
 
 #   Helpers
     def isUnpassable(self, x):
         return self.map[x] == 4 or self.map[x] == 2
 
+    def isUnpassableMap(self, x, map):
+        return map[x] == 4 or map[x] == 2
 
 # mapObj = Map("######\n#   .#\n# $  #\n#@   #\n######\n")
 # print("Width:  ", mapObj.width)

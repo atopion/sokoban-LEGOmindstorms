@@ -37,7 +37,7 @@ class TranspositionTable:
 
     def lookup(self, box_array, player_position):
         h = self._computeHash(box_array, player_position)
-        self.table[h] = True
+        return self._lookup(h)
 
     def remove(self, box_array, player_position):
         h = self._computeHash(box_array, player_position)
