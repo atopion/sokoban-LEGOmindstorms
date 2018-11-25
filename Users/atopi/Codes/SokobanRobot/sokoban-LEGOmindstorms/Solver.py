@@ -5,9 +5,12 @@ from StateTree import Node
 from Execution import Execution
 import TranspositionTable
 import AssignmentAlgorithms
+import os
 
-# level = open("level.txt", "r").read()
-level = open("level/level2.txt", "r").read()
+level_name = "level2.txt"
+cwd = os.getcwd()
+path = os.path.join(cwd, "level", level_name)
+level = open(path, "r").read()
 
 game_map = GameMap.Map(level)
 game_map.mapProduction()
@@ -42,4 +45,7 @@ else:
         node = node.farther
     print(result)
     print("PATH:", res)
+    print("")
 
+os.system("java -classpath \"C:\\Users\\atopi\\Codes\\SokobanRobot\\SokobanRobot\\out\\production\\SokobanRobot\" " +
+          "distanceboard.Viewer \"" + path + "\" \"" + str(result) + "\"")
