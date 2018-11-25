@@ -33,10 +33,10 @@ class Metrics:
                             target_queue.put(box_pos)
 
     def manhattan_distance(self, a, b):
-        a_x = a % self.width
-        a_y = a / self.width
-        b_x = b % self.width
-        b_y = b / self.width
+        a_x = int(a % self.width)
+        a_y = int(a / self.width)
+        b_x = int(b % self.width)
+        b_y = int(b / self.width)
         return Metrics.manhattan_distance_2d(a_x, a_y, b_x, b_y)
 
     @staticmethod
@@ -44,10 +44,10 @@ class Metrics:
         return abs(a_x - b_x) + abs(a_y - b_y)
 
     def pythagorean_distance(self, a, b):
-        a_x = a % self.width
-        a_y = a / self.width
-        b_x = b % self.width
-        b_y = b / self.width
+        a_x = int(a % self.width)
+        a_y = int(a / self.width)
+        b_x = int(b % self.width)
+        b_y = int(b / self.width)
         return Metrics.pythagorean_distance_2d(a_x, a_y, b_x, b_y)
 
     @staticmethod

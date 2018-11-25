@@ -9,7 +9,7 @@ class AssignmentAlgorithms:
     def __init__(self, width, height, targets, cleared_board):
         self.width = width
         self.targets = targets
-        self.metrics = Metrics.Metrics(width, height, targets, cleared_board, Metrics.PULL_METRIC)
+        self.metrics = Metrics.Metrics(width, height, targets, cleared_board, Metrics.MANHATTAN_METRIC)
 
     def closestAssignment(self, box_array):
         res = 0

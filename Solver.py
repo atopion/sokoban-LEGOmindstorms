@@ -6,7 +6,8 @@ from Execution import Execution
 import TranspositionTable
 import AssignmentAlgorithms
 
-level = open("level.txt", "r").read()
+# level = open("level.txt", "r").read()
+level = open("level/level2.txt", "r").read()
 
 game_map = GameMap.Map(level)
 game_map.mapProduction()
@@ -24,17 +25,21 @@ execution = Execution(table, game_map)
 
 solution = execution.execute(root)
 result = []
+res = ""
 node = solution
 if node is None:
     print("No Solution found")
 else:
+    print("")
+    print("Solution found: ")
     while node.farther is not None:
-        result.append(node.move)
-        #n = node.move[1] - node.move[0]
-        #if n == 1: result.append(" right,")
-        #elif n == -1: result.append(" left,")
-        #elif n > 0: result.append(" up,")
-        #elif n < 0: result.append(" down,")
+        result.insert(0, node.move)
+        n = node.move[1] - node.move[0]
+        if n == 1: res = " right," + res
+        elif n == -1: res = " left," + res
+        elif n < 0: res = " up," + res
+        elif n > 0: res = " down," + res
         node = node.farther
     print(result)
+    print("PATH:", res)
 

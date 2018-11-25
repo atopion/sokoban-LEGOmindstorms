@@ -11,10 +11,12 @@ class DeadlockDetection:
         self.width = width
         self.height = height
         self.deadlock_array = np.zeros(self.width*self.height, dtype=int)
+        self.detect_pull()
 
     # Self designed deadlock detection.
     # Sets every corner as deadlocked and then uses the recursive property of deadlocks
     def detect(self):
+        generator_array = np.zeros(self.width*self.height, dtype=int)
         for i in range(0, len(self.game_array)):
             # Wall
             if self.game_array[i] == 4:
@@ -34,33 +36,54 @@ class DeadlockDetection:
                 elif (self.game_array[i+1] == 4 or i+1 > len(self.game_array)) and (self.game_array[i+self.width] == 4 or i+self.width > len(self.game_array)):
                     self.deadlock_array[i] = 1
 
-        for i in range(0, len(self.game_array), 1):
-            self.deadlock_array[i] = self._reku_deadlock(i)
+            # Without walls its no deadlock
+            #elif not self._walls_around(i):
+            #    self.deadlock_array[i] = 2
+            # Targets are not deadlocks
+            #elif self.game_array[i] == 3:
+            #    self.deadlock_array[i] = 2
 
-    def _reku_deadlock(self, a):
-        if a < 0 or a >= len(self.game_array) or self.game_array[a] == 4: return 0
-        elif self.deadlock_array[a] == 1:
+        for i in range(0, len(self.game_array), 1):
+            self.deadlock_array[i] = self._reku_deadlock(i, generator_array)
+
+    def _reku_deadlock(self, a, generator_array):
+        if a < 0 or a >= len(self.game_array): # or self.game_array[a] == 4:
             return 1
-        elif not self._walls_around(a):
+        if self.deadlock_array[a] == 2:
             return 0
-        else:
-            r = 1
-            if a+1 < len(self.game_array): r = r & self._reku_deadlock(a+1)
-            if a-1 > 0: r = r & self._reku_deadlock(a-1)
-            if a+self.width < len(self.game_array): r = r & self._reku_deadlock(a+self.width)
-            if a-self.width > 0: r = r & self._reku_deadlock(a-self.width)
-            return r
+        if generator_array[a] == 1:
+            return 1
+        generator_array[a] = 1
+        if self.deadlock_array[a] == 1:
+            return 1
+        if self.game_array[a] == 4:
+            return 1
+        if not self._walls_around(a):
+            return 0
+        if self.game_array[a] == 3:
+            return 0
+        r = 1
+        if a+1 < len(self.game_array):
+            r = r & self._reku_deadlock(a+1, generator_array)
+        if a-1 >= 0:
+            r = r & self._reku_deadlock(a-1, generator_array)
+        if a+self.width < len(self.game_array):
+            r = r & self._reku_deadlock(a+self.width, generator_array)
+        if a-self.width > 0:
+            r = r & self._reku_deadlock(a-self.width, generator_array)
+        return r
+
 
     # Pull Deadlock detection
     def detect_pull(self):
         visited = np.zeros(self.width*self.height, dtype=int)
         for t in range(0, len(self.target_array), 1):
-            self._reku_pull(t, visited)
+            self._reku_pull(self.target_array[t], visited)
         for a in range(0, len(visited), 1):
             if visited[a] == 0:
                 self.deadlock_array[a] = 1
 
-    def _reku_pull(self, a, visited):
+    def _reku_pull1(self, a, visited):
         if visited[a] == 1: return
         if a < 0 or self.game_array[a] == 4 or a >= len(self.game_array): return
         visited[a] = 1
@@ -68,6 +91,25 @@ class DeadlockDetection:
         if a-1 > 0 and self.game_array[a+1] == 4: self._reku_pull(a-1, visited)
         if a+self.width < len(self.game_array) and self.game_array[a+self.width] != 4: self._reku_pull(a+self.width, visited)
         if a-self.width > 0 and self.game_array[a-self.width] != 4: self._reku_pull(a-self.width, visited)
+
+    def _reku_pull(self, a, visited):
+        if visited[a] == 1:
+            return
+        if a < 0 or a >= len(self.game_array):
+            return
+        visited[a] = 1
+        if self.game_array[a] == 4:
+            return
+        if a+2 < len(self.game_array) and self.game_array[a+1] != 4 and self.game_array[a+2] != 4:
+            self._reku_pull(a+1, visited)
+        if a-2 >= 0 and self.game_array[a-1] != 4 and self.game_array[a-2] != 4:
+            self._reku_pull(a-1, visited)
+        if a + 2*self.width < len(self.game_array) and self.game_array[a+self.width] != 4 and self.game_array[a+2*self.width] != 4:
+            self._reku_pull(a+self.width, visited)
+        if a - 2*self.width >= 0 and self.game_array[a-self.width] != 4 and self.game_array[a-2*self.width]:
+            self._reku_pull(a-self.width, visited)
+
+
 
     # Helpers
     def _walls_around(self, a):

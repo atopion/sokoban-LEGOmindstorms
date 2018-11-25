@@ -3,8 +3,8 @@ import numpy as np
 
 class Map:
 
-    clear     = lambda self, x : x if x != 1 or x != 2 else 5
-    #box       = lambda self, x : x == 2
+    clear     = lambda self, x : 5 if x == 1 or x == 2 else x
+    # box       = lambda self, x : x == 2
     targets   = lambda self, x : x == 3
     playerpos = lambda self, x : x == 1
 
@@ -15,10 +15,10 @@ class Map:
         self.width = 0
         self.height = 0
         self.mapProduction()
-        self.clearedMap = list(filter(self.clear, self.map))
-        self.targetArray = list(filter(self.targets, self.map))
+        self.clearedMap = list(map(self.clear, self.map))
         self.player = list(filter(self.playerpos, self.map))[0]
         self.boxArray = [i for i, x in enumerate(self.map) if x == 2]
+        self.targetArray = [i for i, x in enumerate(self.map) if x == 3]
 
         self.reachableArray = np.zeros(self.width * self.height, dtype=int)
 
@@ -119,11 +119,11 @@ class Map:
                 if(tmp_map[i] == c[1]):
                     tmp_map[i] = c[0]
 
-        print("TMP MAP: ")
-        self.print_array(tmp_map)
-        print("")
+        # print("TMP MAP: ")
+        # self.print_array(tmp_map)
+        # print("")
         playerLabel = tmp_map[y * self.width + x]
-        print("PlayerLabel: ", playerLabel)
+        # print("PlayerLabel: ", playerLabel)
 
         self.reachableArray = np.zeros(self.width * self.height, dtype=int)
         for i in range(0, len(tmp_map), 1):
@@ -186,10 +186,11 @@ class Map:
                 if(tmp_map[i] == c[1]):
                     tmp_map[i] = c[0]
 
-        print("TMP MAP: ")
-        self.print_array(tmp_map)
+        # print("Position: ", (y * self.width + x))
+        # print("TMP MAP: ")
+        # self.print_array(tmp_map)
         playerLabel = tmp_map[y * self.width + x]
-        print("PlayerLabel: ", playerLabel)
+        # print("PlayerLabel: ", playerLabel)
 
         self.reachableArray = np.zeros(self.width * self.height, dtype=int)
         for i in range(0, len(tmp_map), 1):
@@ -236,10 +237,10 @@ class Map:
                 tmp = ""
                 count = 0
 
-    def print_array(self, map):
+    def print_array(self, m):
         tmp = ""
         count = 0
-        for c in map:
+        for c in m:
             tmp += str(c)
             count += 1
             if count == self.width:
@@ -247,9 +248,36 @@ class Map:
                 tmp = ""
                 count = 0
 
+    def print_map_tmp(self, move, box_array):
+        tmp = ""
+        count = 0
+        for i in range(0, len(self.map), 1):
+            if i == move[0]:
+                tmp += "@"
+            elif i == move[1]:
+                tmp += "$"
+            elif i in box_array:
+                tmp += "$"
+            elif self.clearedMap[i] == 1:
+                tmp += " "
+            elif self.clearedMap[i] == 2:
+                tmp += "$"
+            elif self.clearedMap[i] == 3:
+                tmp += "."
+            elif self.clearedMap[i] == 4:
+                tmp += "#"
+            elif self.clearedMap[i] == 5:
+                tmp += " "
+            count += 1
+            if count == self.width:
+                print(tmp)
+                tmp = ""
+                count = 0
+
+
 #   Helpers
     def isUnpassable(self, x):
-        return self.map[x] == 4 or self.map[x] == 2
+        return self.map[x] == 4 #or self.map[x] == 2
 
     def isUnpassableMap(self, x, map):
         return map[x] == 4 or map[x] == 2
